@@ -79,7 +79,6 @@ private:
     QWidget *m_pdfHolder = nullptr;
     QPointer<KParts::ReadOnlyPart> m_part;
     Okular::ViewerInterface *m_viewer = nullptr; // same object as m_part, if it's Okular
-    QPushButton *m_syncBtn = nullptr; // checkable: "Follow cursor"
     QAction *m_syncAction = nullptr;
     QTimer m_followTimer;            // debounce for cursor-follow
     int m_lastSyncedLine = -1;

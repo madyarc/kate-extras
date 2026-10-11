@@ -108,15 +108,10 @@ TexMdView::TexMdView(TexMdPlugin *plugin, KTextEditor::MainWindow *mainWindow)
     m_status = new QLabel;
     m_status->setWordWrap(true);
     m_compileBtn = new QPushButton(QIcon::fromTheme(QStringLiteral("run-build")), QStringLiteral("Compile"));
-    m_syncBtn = new QPushButton(QIcon::fromTheme(QStringLiteral("go-jump")), QStringLiteral("Follow cursor"));
-    m_syncBtn->setCheckable(true);
-    m_syncBtn->setChecked(true);
-    m_syncBtn->setToolTip(QStringLiteral("PDF follows the cursor line as you move in the source.\n"
-                                         "Ctrl+Alt+J jumps once even when this is off.\n"
-                                         "Shift+click in the PDF jumps back to the source."));
-    m_syncBtn->setEnabled(false);
+    m_compileBtn->setToolTip(QStringLiteral("The PDF follows the cursor line.\n"
+                                            "Shift+click in the PDF jumps back to the source.\n"
+                                            "Ctrl+Alt+J re-centres the PDF on the cursor line."));
     bar->addWidget(m_status, 1);
-    bar->addWidget(m_syncBtn);
     bar->addWidget(m_compileBtn);
     tl->addLayout(bar);
     m_log = new QPlainTextEdit;
@@ -139,13 +134,6 @@ TexMdView::TexMdView(TexMdPlugin *plugin, KTextEditor::MainWindow *mainWindow)
             m_doc->documentSave(); // save triggers compile
         else
             compile();
-    });
-
-    connect(m_syncBtn, &QPushButton::toggled, this, [this](bool on) {
-        if (on) {
-            m_lastSyncedLine = -1;
-            forwardSearch();
-        }
     });
 
     // cursor-follow: sync shortly after the cursor settles on a new line
@@ -243,7 +231,7 @@ void TexMdView::onViewChanged(KTextEditor::View *view)
         m_docConns << connect(m_doc, &KTextEditor::Document::documentUrlChanged, this, refresh);
         m_docConns << connect(m_doc, &KTextEditor::Document::modeChanged, this, refresh);
         m_docConns << connect(view, &KTextEditor::View::cursorPositionChanged, this, [this] {
-            if (m_kind == Kind::Tex && m_syncBtn->isChecked())
+            if (m_kind == Kind::Tex)
                 m_followTimer.start();
         });
     }
@@ -499,7 +487,6 @@ bool TexMdView::ensurePart()
         m_viewer->setShowSourceLocationsGraphically(true);
         // string-based connect: the signal lives on the part, see viewerinterface.h
         connect(m_part.data(), SIGNAL(openSourceReference(QString, int, int)), this, SLOT(onSourceReference(QString, int, int)));
-        m_syncBtn->setEnabled(true);
     }
     return true;
 }

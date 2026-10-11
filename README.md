@@ -67,7 +67,7 @@ Saving a `.tex` file compiles it. For multi-file projects, put these magic comme
 
 ### SyncTeX
 
-- **Source → PDF:** with **Follow cursor** on (the default), the PDF tracks your cursor line. **Ctrl+Alt+J** jumps once when it's off. After each compile, the PDF lands on the cursor line.
+- **Source → PDF:** the PDF always follows your cursor line, and lands on it after each compile. If you scroll the PDF away, **Ctrl+Alt+J** brings it back to the cursor line.
 - **PDF → source:** **Shift+click** in the PDF jumps to that line in Kate, opening the file if needed.
 
 The embedded viewer keeps its own settings in `~/.config/texmdpreview-okularpartrc`, so it doesn't change the mouse mode of the standalone Okular app.
