@@ -1,36 +1,38 @@
-# Maintainer: Madhesh <https://github.com/halfblood-carbyne>
-pkgname=texmdpreview-git
-_pkgname=texmdpreview
-pkgver=r1
+# Maintainer: Madhesh <https://github.com/madyarc>
+#
+# Builds the checkout this PKGBUILD sits in (no second clone):
+#   git clone https://github.com/madyarc/texmdpreview.git
+#   cd texmdpreview/arch && makepkg -si
+# Update later with: git pull && makepkg -si
+
+pkgname=texmdpreview
+pkgver=0.4.0
 pkgrel=1
 pkgdesc="Kate side panel: live Markdown preview with KaTeX math, LaTeX to PDF preview with SyncTeX"
 arch=('x86_64')
-url="https://github.com/halfblood-carbyne/texmdpreview"
+url="https://github.com/madyarc/texmdpreview"
 license=('GPL-3.0-or-later')
 depends=('kate' 'ktexteditor' 'kparts' 'kcoreaddons' 'kconfig' 'qt6-base' 'qt6-webengine' 'okular')
 makedepends=('git' 'cmake' 'extra-cmake-modules')
 optdepends=('texlive-binextra: latexmk, needed to compile .tex files'
             'texlive-basic: pdflatex')
-provides=("$_pkgname")
-conflicts=("$_pkgname")
 
 _katex=0.16.22
 _mdit=14.1.0
-source=("$_pkgname::git+$url.git"
-        "katex-$_katex.tgz::https://registry.npmjs.org/katex/-/katex-$_katex.tgz"
+source=("katex-$_katex.tgz::https://registry.npmjs.org/katex/-/katex-$_katex.tgz"
         "markdown-it-$_mdit.tgz::https://registry.npmjs.org/markdown-it/-/markdown-it-$_mdit.tgz")
 noextract=("katex-$_katex.tgz" "markdown-it-$_mdit.tgz")
 sha256sums=('SKIP'
-            'SKIP'
             'SKIP')
 
+_repo="$startdir/.."
+
 pkgver() {
-  cd "$_pkgname"
-  printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
+  printf "0.4.0.r%s.%s" "$(git -C "$_repo" rev-list --count HEAD)" "$(git -C "$_repo" rev-parse --short=7 HEAD)"
 }
 
 build() {
-  cmake -B build -S "$_pkgname" \
+  cmake -B build -S "$_repo" \
     -DCMAKE_INSTALL_PREFIX=/usr \
     -DCMAKE_BUILD_TYPE=None \
     -DKATEX_VERSION="$_katex" \
@@ -42,5 +44,5 @@ build() {
 
 package() {
   DESTDIR="$pkgdir" cmake --install build
-  install -Dm644 "$_pkgname/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 "$_repo/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
