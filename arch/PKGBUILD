@@ -1,0 +1,46 @@
+# Maintainer: Madhesh <https://github.com/halfblood-carbyne>
+pkgname=texmdpreview-git
+_pkgname=texmdpreview
+pkgver=r1
+pkgrel=1
+pkgdesc="Kate side panel: live Markdown preview with KaTeX math, LaTeX to PDF preview with SyncTeX"
+arch=('x86_64')
+url="https://github.com/halfblood-carbyne/texmdpreview"
+license=('GPL-3.0-or-later')
+depends=('kate' 'ktexteditor' 'kparts' 'kcoreaddons' 'kconfig' 'qt6-base' 'qt6-webengine' 'okular')
+makedepends=('git' 'cmake' 'extra-cmake-modules')
+optdepends=('texlive-binextra: latexmk, needed to compile .tex files'
+            'texlive-basic: pdflatex')
+provides=("$_pkgname")
+conflicts=("$_pkgname")
+
+_katex=0.16.22
+_mdit=14.1.0
+source=("$_pkgname::git+$url.git"
+        "katex-$_katex.tgz::https://registry.npmjs.org/katex/-/katex-$_katex.tgz"
+        "markdown-it-$_mdit.tgz::https://registry.npmjs.org/markdown-it/-/markdown-it-$_mdit.tgz")
+noextract=("katex-$_katex.tgz" "markdown-it-$_mdit.tgz")
+sha256sums=('SKIP'
+            'SKIP'
+            'SKIP')
+
+pkgver() {
+  cd "$_pkgname"
+  printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"
+}
+
+build() {
+  cmake -B build -S "$_pkgname" \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DCMAKE_BUILD_TYPE=None \
+    -DKATEX_VERSION="$_katex" \
+    -DMDIT_VERSION="$_mdit" \
+    -DKATEX_TARBALL="$srcdir/katex-$_katex.tgz" \
+    -DMDIT_TARBALL="$srcdir/markdown-it-$_mdit.tgz"
+  cmake --build build
+}
+
+package() {
+  DESTDIR="$pkgdir" cmake --install build
+  install -Dm644 "$_pkgname/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
