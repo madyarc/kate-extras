@@ -145,13 +145,15 @@ TexMdView::TexMdView(TexMdPlugin *plugin, KTextEditor::MainWindow *mainWindow)
     });
 
     // forward search shortcut, active anywhere in this Kate window
-    m_syncAction = new QAction(QStringLiteral("Show Cursor Line in PDF"), this);
+    m_syncAction = new QAction(QStringLiteral("Sync Preview to Editor"), this);
     m_syncAction->setShortcut(QKeySequence(QStringLiteral("Ctrl+Alt+J")));
     m_syncAction->setShortcutContext(Qt::WindowShortcut);
     connect(m_syncAction, &QAction::triggered, this, [this] {
         if (m_kind == Kind::Tex) {
             m_lastSyncedLine = -1;
             forwardSearch();
+        } else if (m_kind == Kind::Markdown) {
+            syncMarkdownScroll();
         }
     });
     m_mw->window()->addAction(m_syncAction);
@@ -233,6 +235,8 @@ void TexMdView::onViewChanged(KTextEditor::View *view)
         m_docConns << connect(view, &KTextEditor::View::cursorPositionChanged, this, [this] {
             if (m_kind == Kind::Tex)
                 m_followTimer.start();
+            else if (m_kind == Kind::Markdown && mdCursorLine() != m_lastSyncedLine)
+                syncMarkdownScroll();
         });
     }
 
@@ -318,9 +322,23 @@ void TexMdView::pushMarkdown()
     QString base;
     if (m_doc->url().isLocalFile())
         base = QUrl::fromLocalFile(QFileInfo(m_doc->url().toLocalFile()).absolutePath() + QLatin1Char('/')).toString();
-    const QJsonArray args{m_doc->text(), base};
+    m_lastSyncedLine = mdCursorLine();
+    const QJsonArray args{m_doc->text(), base, m_lastSyncedLine};
     m_web->page()->runJavaScript(QStringLiteral("texmd.render.apply(null,%1);")
                                      .arg(QString::fromUtf8(QJsonDocument(args).toJson(QJsonDocument::Compact))));
+}
+
+int TexMdView::mdCursorLine() const
+{
+    return m_view ? m_view->cursorPosition().line() : 0;
+}
+
+void TexMdView::syncMarkdownScroll()
+{
+    if (!m_web || !m_webReady || m_kind != Kind::Markdown)
+        return;
+    m_lastSyncedLine = mdCursorLine();
+    m_web->page()->runJavaScript(QStringLiteral("texmd.scrollToLine(%1);").arg(m_lastSyncedLine));
 }
 
 // ---------------------------------------------------------------------------

@@ -50,6 +50,8 @@ private:
     // markdown
     void pushMarkdown();
     void onWebLoaded(bool ok);
+    void syncMarkdownScroll(); // cursor line -> preview position
+    int mdCursorLine() const;
 
     // latex
     void compile();

@@ -5,6 +5,7 @@ A side panel for the [Kate](https://kate-editor.org) editor that previews both M
 - **`.md`**: live preview as you type, with math rendered by KaTeX (works offline)
 - **`.tex`**: compiles with `latexmk` on save and shows the PDF in an embedded Okular view, with errors listed above it
 - **SyncTeX both ways**: the PDF follows your cursor, and Shift+click in the PDF jumps back to the source line
+- **Markdown cursor sync**: the preview follows your cursor line
 
 Requires KDE Plasma 6 (KDE Frameworks 6, Qt 6). Tested on Fedora 44 (KF 6.30, Qt 6.11).
 
@@ -56,6 +57,8 @@ Supported math: `$...$`, `$$...$$`, `\(...\)`, `\[...\]`, and `\begin{align}...\
 
 Lines KaTeX can't use (such as `\usepackage`) are skipped. Restart Kate after editing the file.
 
+**Cursor sync:** the preview follows your cursor line, like the PDF does for LaTeX. If you scroll the preview away, **Ctrl+Alt+J** brings it back to the cursor line.
+
 ### LaTeX
 
 Saving a `.tex` file compiles it. For multi-file projects, put these magic comments at the top of each sub-file:
@@ -74,7 +77,6 @@ The embedded viewer keeps its own settings in `~/.config/texmdpreview-okularpart
 
 ## Not yet
 
-- Scroll sync between the editor and the Markdown preview
 - Packages for Debian/Ubuntu and RPM-based distros
 
 ## Uninstall
