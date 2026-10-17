@@ -6,14 +6,14 @@
 # Update later with: git pull && makepkg -si
 
 pkgname=texmdpreview
-pkgver=0.4.0
+pkgver=0.1
 pkgrel=1
 pkgdesc="Kate side panel: live Markdown preview with KaTeX math, LaTeX to PDF preview with SyncTeX"
 arch=('x86_64')
 url="https://github.com/madyarc/texmdpreview"
 license=('GPL-3.0-or-later')
 depends=('kate' 'ktexteditor' 'kparts' 'kcoreaddons' 'kconfig' 'qt6-base' 'qt6-webengine' 'okular')
-makedepends=('git' 'cmake' 'extra-cmake-modules')
+makedepends=('cmake' 'extra-cmake-modules')
 optdepends=('texlive-binextra: latexmk, needed to compile .tex files'
             'texlive-basic: pdflatex')
 
@@ -26,10 +26,6 @@ sha256sums=('SKIP'
             'SKIP')
 
 _repo="$startdir/.."
-
-pkgver() {
-  printf "0.4.0.r%s.%s" "$(git -C "$_repo" rev-list --count HEAD)" "$(git -C "$_repo" rev-parse --short=7 HEAD)"
-}
 
 build() {
   cmake -B build -S "$_repo" \
