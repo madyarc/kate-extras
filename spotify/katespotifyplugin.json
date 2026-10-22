@@ -1,0 +1,11 @@
+{
+    "KPlugin": {
+        "Description": "Control the Spotify desktop app from a Kate side panel",
+        "Name": "Spotify",
+        "Icon": "spotify-client",
+        "Authors": [ { "Name": "Vignesh" } ],
+        "License": "MIT",
+        "Version": "1.0",
+        "ServiceTypes": [ "KTextEditor/Plugin" ]
+    }
+}

@@ -1,0 +1,11 @@
+{
+    "KPlugin": {
+        "Description": "Colab-style RAM and VRAM usage bars in the menu bar",
+        "Name": "Resource Monitor",
+        "Icon": "utilities-system-monitor",
+        "Authors": [ { "Name": "Vignesh" } ],
+        "License": "MIT",
+        "Version": "1.0",
+        "ServiceTypes": [ "KTextEditor/Plugin" ]
+    }
+}

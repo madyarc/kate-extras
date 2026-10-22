@@ -1,0 +1,11 @@
+{
+    "KPlugin": {
+        "Description": "A calendar side panel for keeping track of deadlines",
+        "Name": "Deadlines",
+        "Icon": "view-calendar",
+        "Authors": [ { "Name": "Vignesh" } ],
+        "License": "MIT",
+        "Version": "1.0",
+        "ServiceTypes": [ "KTextEditor/Plugin" ]
+    }
+}
