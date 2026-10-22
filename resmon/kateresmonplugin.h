@@ -12,6 +12,7 @@ class MainWindow;
 
 class ResourceMeter;
 class ResourceSampler;
+class ResourceStatusItem;
 
 class KateResMonPlugin : public KTextEditor::Plugin
 {
@@ -22,9 +23,14 @@ public:
 
     QObject *createView(KTextEditor::MainWindow *mainWindow) override;
 
+    ResourceSampler *sampler() const;
+    void showStatusItem();
+
 private:
     // One sampler for all windows so the GPU is only queried once per interval
     ResourceSampler *m_sampler;
+    // A single menu bar extra for all windows when the menu bar is the native global one
+    ResourceStatusItem *m_statusItem = nullptr;
 };
 
 class KateResMonPluginView : public QObject
@@ -32,7 +38,7 @@ class KateResMonPluginView : public QObject
     Q_OBJECT
 
 public:
-    KateResMonPluginView(ResourceSampler *sampler, KTextEditor::MainWindow *mainWindow);
+    KateResMonPluginView(KateResMonPlugin *plugin, KTextEditor::MainWindow *mainWindow);
     ~KateResMonPluginView() override;
 
 private:

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QDBusObjectPath>
 #include <QUrl>
 #include <QVariantMap>
 #include <QWidget>
@@ -10,8 +9,9 @@ class QNetworkAccessManager;
 class QSlider;
 class QTimer;
 class QToolButton;
+class SpotifyPlayer;
 
-// Side panel that drives the Spotify desktop client over MPRIS (D-Bus)
+// Side panel that drives the Spotify desktop client through SpotifyPlayer
 class SpotifyWidget : public QWidget
 {
     Q_OBJECT
@@ -25,9 +25,6 @@ public Q_SLOTS:
     void previous();
     void raiseSpotify();
 
-private Q_SLOTS:
-    void onPropertiesChanged(const QString &interface, const QVariantMap &changed, const QStringList &invalidated);
-
 private:
     void setAvailable(bool available);
     void refresh();
@@ -36,12 +33,10 @@ private:
     void updatePlayButton();
     void updateTimeLabels(qint64 positionMs);
     void loadArt(const QUrl &url);
-    void callPlayer(const QString &method, const QVariantList &args = {});
-    void seekTo(qint64 positionMs);
-    void setVolume(int percent);
-    void launchSpotify();
 
+    SpotifyPlayer *m_player = nullptr;
     QWidget *m_offlinePanel = nullptr;
+    QLabel *m_offlineLabel = nullptr;
     QWidget *m_playerPanel = nullptr;
     QLabel *m_artLabel = nullptr;
     QLabel *m_titleLabel = nullptr;
@@ -58,10 +53,7 @@ private:
     QTimer *m_pollTimer = nullptr;
     QNetworkAccessManager *m_network = nullptr;
 
-    bool m_available = false;
-    bool m_refreshPending = false;
     QString m_playbackStatus;
-    QDBusObjectPath m_trackId;
     qint64 m_lengthMs = 0;
     QUrl m_artUrl;
 };

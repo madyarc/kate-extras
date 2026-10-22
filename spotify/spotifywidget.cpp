@@ -1,46 +1,23 @@
 #include "spotifywidget.h"
+#include "spotifyplayer.h"
 
 #include <KLocalizedString>
 
-#include <QDBusArgument>
-#include <QDBusConnection>
-#include <QDBusConnectionInterface>
-#include <QDBusMessage>
-#include <QDBusPendingCallWatcher>
-#include <QDBusPendingReply>
-#include <QDBusServiceWatcher>
-#include <QDBusVariant>
 #include <QHBoxLayout>
 #include <QIcon>
 #include <QLabel>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QPixmap>
-#include <QProcess>
 #include <QPushButton>
 #include <QSlider>
-#include <QStandardPaths>
 #include <QTimer>
 #include <QToolButton>
 #include <QVBoxLayout>
 
 namespace
 {
-const QString s_service = QStringLiteral("org.mpris.MediaPlayer2.spotify");
-const QString s_path = QStringLiteral("/org/mpris/MediaPlayer2");
-const QString s_rootInterface = QStringLiteral("org.mpris.MediaPlayer2");
-const QString s_playerInterface = QStringLiteral("org.mpris.MediaPlayer2.Player");
-const QString s_propertiesInterface = QStringLiteral("org.freedesktop.DBus.Properties");
 constexpr int s_artSize = 220;
-
-// Nested a{sv} values arrive still marshalled as QDBusArgument
-QVariantMap toVariantMap(const QVariant &value)
-{
-    if (value.metaType() == QMetaType::fromType<QDBusArgument>()) {
-        return qdbus_cast<QVariantMap>(value.value<QDBusArgument>());
-    }
-    return value.toMap();
-}
 
 QString formatTime(qint64 ms)
 {
@@ -61,20 +38,22 @@ QToolButton *makeButton(const QString &iconName, const QString &toolTip, QWidget
 
 SpotifyWidget::SpotifyWidget(QWidget *parent)
     : QWidget(parent)
+    , m_player(new SpotifyPlayer(this))
     , m_pollTimer(new QTimer(this))
     , m_network(new QNetworkAccessManager(this))
 {
     auto *layout = new QVBoxLayout(this);
 
-    // Shown while the Spotify client is not on the bus
+    // Shown while the Spotify client is not running
     m_offlinePanel = new QWidget(this);
     auto *offlineLayout = new QVBoxLayout(m_offlinePanel);
-    auto *offlineLabel = new QLabel(i18n("Spotify is not running."), m_offlinePanel);
-    offlineLabel->setAlignment(Qt::AlignCenter);
+    m_offlineLabel = new QLabel(m_offlinePanel);
+    m_offlineLabel->setAlignment(Qt::AlignCenter);
+    m_offlineLabel->setWordWrap(true);
     auto *launchButton = new QPushButton(QIcon::fromTheme(QStringLiteral("spotify-client")), i18n("Launch Spotify"), m_offlinePanel);
-    connect(launchButton, &QPushButton::clicked, this, &SpotifyWidget::launchSpotify);
+    connect(launchButton, &QPushButton::clicked, m_player, &SpotifyPlayer::launch);
     offlineLayout->addStretch();
-    offlineLayout->addWidget(offlineLabel);
+    offlineLayout->addWidget(m_offlineLabel);
     offlineLayout->addWidget(launchButton, 0, Qt::AlignHCenter);
     offlineLayout->addStretch();
     layout->addWidget(m_offlinePanel);
@@ -105,7 +84,7 @@ SpotifyWidget::SpotifyWidget(QWidget *parent)
     m_seekSlider = new QSlider(Qt::Horizontal, m_playerPanel);
     connect(m_seekSlider, &QSlider::sliderMoved, this, &SpotifyWidget::updateTimeLabels);
     connect(m_seekSlider, &QSlider::sliderReleased, this, [this]() {
-        seekTo(m_seekSlider->value());
+        m_player->seek(m_seekSlider->value());
     });
     playerLayout->addWidget(m_seekSlider);
 
@@ -138,7 +117,7 @@ SpotifyWidget::SpotifyWidget(QWidget *parent)
     m_volumeSlider = new QSlider(Qt::Horizontal, m_playerPanel);
     m_volumeSlider->setRange(0, 100);
     m_volumeSlider->setToolTip(i18n("Volume"));
-    connect(m_volumeSlider, &QSlider::sliderMoved, this, &SpotifyWidget::setVolume);
+    connect(m_volumeSlider, &QSlider::sliderMoved, m_player, &SpotifyPlayer::setVolume);
     volumeLayout->addWidget(volumeIcon);
     volumeLayout->addWidget(m_volumeSlider);
     playerLayout->addLayout(volumeLayout);
@@ -151,81 +130,47 @@ SpotifyWidget::SpotifyWidget(QWidget *parent)
     playerLayout->addStretch();
     layout->addWidget(m_playerPanel);
 
-    QDBusConnection bus = QDBusConnection::sessionBus();
-
-    auto *serviceWatcher = new QDBusServiceWatcher(s_service, bus, QDBusServiceWatcher::WatchForRegistration | QDBusServiceWatcher::WatchForUnregistration, this);
-    connect(serviceWatcher, &QDBusServiceWatcher::serviceRegistered, this, [this]() {
-        setAvailable(true);
-    });
-    connect(serviceWatcher, &QDBusServiceWatcher::serviceUnregistered, this, [this]() {
-        setAvailable(false);
-    });
-
-    bus.connect(s_service, s_path, s_propertiesInterface, QStringLiteral("PropertiesChanged"), this, SLOT(onPropertiesChanged(QString, QVariantMap, QStringList)));
+    connect(m_player, &SpotifyPlayer::availableChanged, this, &SpotifyWidget::setAvailable);
+    connect(m_player, &SpotifyPlayer::propertiesChanged, this, &SpotifyWidget::applyProperties);
+    connect(m_player, &SpotifyPlayer::problem, m_offlineLabel, &QLabel::setText);
 
     // Spotify does not announce position or volume changes, so poll while visible
     m_pollTimer->setInterval(1000);
     connect(m_pollTimer, &QTimer::timeout, this, &SpotifyWidget::refresh);
+    m_pollTimer->start();
 
-    setAvailable(bus.interface()->isServiceRegistered(s_service));
+    setAvailable(m_player->isAvailable());
 }
 
 void SpotifyWidget::playPause()
 {
-    callPlayer(QStringLiteral("PlayPause"));
+    m_player->playPause();
 }
 
 void SpotifyWidget::next()
 {
-    callPlayer(QStringLiteral("Next"));
+    m_player->next();
 }
 
 void SpotifyWidget::previous()
 {
-    callPlayer(QStringLiteral("Previous"));
+    m_player->previous();
 }
 
 void SpotifyWidget::raiseSpotify()
 {
-    if (!m_available) {
-        launchSpotify();
-        return;
-    }
-
-    QDBusMessage message = QDBusMessage::createMethodCall(s_service, s_path, s_propertiesInterface, QStringLiteral("Get"));
-    message << s_rootInterface << QStringLiteral("CanRaise");
-
-    auto *watcher = new QDBusPendingCallWatcher(QDBusConnection::sessionBus().asyncCall(message), this);
-    connect(watcher, &QDBusPendingCallWatcher::finished, this, [this](QDBusPendingCallWatcher *call) {
-        QDBusPendingReply<QDBusVariant> reply = *call;
-        call->deleteLater();
-        if (!reply.isError() && reply.value().variant().toBool()) {
-            QDBusConnection::sessionBus().asyncCall(QDBusMessage::createMethodCall(s_service, s_path, s_rootInterface, QStringLiteral("Raise")));
-        } else {
-            // Spotify is single-instance, so starting it again focuses the running window
-            launchSpotify();
-        }
-    });
-}
-
-void SpotifyWidget::onPropertiesChanged(const QString &interface, const QVariantMap &changed, const QStringList &)
-{
-    if (interface == s_playerInterface) {
-        applyProperties(changed);
-    }
+    m_player->raise();
 }
 
 void SpotifyWidget::setAvailable(bool available)
 {
-    m_available = available;
     m_offlinePanel->setVisible(!available);
     m_playerPanel->setVisible(available);
 
     if (available) {
-        m_pollTimer->start();
         refresh();
     } else {
-        m_pollTimer->stop();
+        m_offlineLabel->setText(i18n("Spotify is not running."));
         m_artUrl.clear();
         m_artLabel->clear();
     }
@@ -233,29 +178,15 @@ void SpotifyWidget::setAvailable(bool available)
 
 void SpotifyWidget::refresh()
 {
-    if (!m_available || m_refreshPending || !isVisible()) {
-        return;
+    if (isVisible()) {
+        m_player->refresh();
     }
-    m_refreshPending = true;
-
-    QDBusMessage message = QDBusMessage::createMethodCall(s_service, s_path, s_propertiesInterface, QStringLiteral("GetAll"));
-    message << s_playerInterface;
-
-    auto *watcher = new QDBusPendingCallWatcher(QDBusConnection::sessionBus().asyncCall(message), this);
-    connect(watcher, &QDBusPendingCallWatcher::finished, this, [this](QDBusPendingCallWatcher *call) {
-        m_refreshPending = false;
-        QDBusPendingReply<QVariantMap> reply = *call;
-        call->deleteLater();
-        if (!reply.isError()) {
-            applyProperties(reply.value());
-        }
-    });
 }
 
 void SpotifyWidget::applyProperties(const QVariantMap &properties)
 {
     if (properties.contains(QStringLiteral("Metadata"))) {
-        applyMetadata(toVariantMap(properties.value(QStringLiteral("Metadata"))));
+        applyMetadata(properties.value(QStringLiteral("Metadata")).toMap());
     }
 
     if (properties.contains(QStringLiteral("PlaybackStatus"))) {
@@ -286,9 +217,6 @@ void SpotifyWidget::applyProperties(const QVariantMap &properties)
 
 void SpotifyWidget::applyMetadata(const QVariantMap &metadata)
 {
-    const QVariant trackId = metadata.value(QStringLiteral("mpris:trackid"));
-    m_trackId = trackId.metaType() == QMetaType::fromType<QDBusObjectPath>() ? trackId.value<QDBusObjectPath>() : QDBusObjectPath(trackId.toString());
-
     const QString title = metadata.value(QStringLiteral("xesam:title")).toString();
     m_titleLabel->setText(title.isEmpty() ? i18n("Nothing playing") : title);
     m_artistLabel->setText(metadata.value(QStringLiteral("xesam:artist")).toStringList().join(QStringLiteral(", ")));
@@ -343,46 +271,4 @@ void SpotifyWidget::loadArt(const QUrl &url)
             m_artLabel->setPixmap(pixmap);
         }
     });
-}
-
-void SpotifyWidget::callPlayer(const QString &method, const QVariantList &args)
-{
-    if (!m_available) {
-        return;
-    }
-    QDBusMessage message = QDBusMessage::createMethodCall(s_service, s_path, s_playerInterface, method);
-    message.setArguments(args);
-    QDBusConnection::sessionBus().asyncCall(message);
-
-    // Pick up the new state quickly instead of waiting for the next poll
-    QTimer::singleShot(300, this, &SpotifyWidget::refresh);
-}
-
-void SpotifyWidget::seekTo(qint64 positionMs)
-{
-    if (m_trackId.path().isEmpty()) {
-        return;
-    }
-    callPlayer(QStringLiteral("SetPosition"), {QVariant::fromValue(m_trackId), QVariant::fromValue(positionMs * 1000)});
-}
-
-void SpotifyWidget::setVolume(int percent)
-{
-    if (!m_available) {
-        return;
-    }
-    QDBusMessage message = QDBusMessage::createMethodCall(s_service, s_path, s_propertiesInterface, QStringLiteral("Set"));
-    message << s_playerInterface << QStringLiteral("Volume") << QVariant::fromValue(QDBusVariant(percent / 100.0));
-    QDBusConnection::sessionBus().asyncCall(message);
-}
-
-void SpotifyWidget::launchSpotify()
-{
-    for (const QString &name : {QStringLiteral("spotify-launcher"), QStringLiteral("spotify")}) {
-        const QString executable = QStandardPaths::findExecutable(name);
-        if (!executable.isEmpty()) {
-            QProcess::startDetached(executable, {});
-            return;
-        }
-    }
 }

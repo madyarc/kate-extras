@@ -29,7 +29,8 @@ struct ResourceSnapshot {
     int gpuTemperature = -1;
 };
 
-// Periodically samples memory, disk and GPU usage; one instance is shared by all Kate windows
+// Periodically samples memory, disk and GPU usage; one instance is shared by all Kate windows.
+// The memory and GPU readers are platform specific: resourcesampler_linux.cpp and resourcesampler_macos.mm
 class ResourceSampler : public QObject
 {
     Q_OBJECT
@@ -48,13 +49,16 @@ private:
     void sampleMemory();
     void sampleDisk();
     void sampleGpu();
-    void onNvidiaSmiFinished();
 
     ResourceSnapshot m_snapshot;
     QTimer *m_timer;
+
+#ifndef Q_OS_MACOS
+    void onNvidiaSmiFinished();
 
     QString m_nvidiaSmi;
     QString m_nvidiaPowerStatusPath;
     QProcess *m_nvidiaProcess = nullptr;
     QString m_amdDevicePath;
+#endif
 };

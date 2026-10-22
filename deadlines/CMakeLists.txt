@@ -15,4 +15,6 @@ target_link_libraries(katedeadlinesplugin PRIVATE
     KF6::XmlGui
 )
 
+kate_extras_plugin(katedeadlinesplugin)
+
 install(TARGETS katedeadlinesplugin DESTINATION ${KDE_INSTALL_PLUGINDIR}/kf6/ktexteditor)

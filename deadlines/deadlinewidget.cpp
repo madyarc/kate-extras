@@ -13,6 +13,7 @@
 #include <QLocale>
 #include <QMessageBox>
 #include <QShortcut>
+#include <QTableView>
 #include <QTextCharFormat>
 #include <QTimer>
 #include <QToolButton>
@@ -50,6 +51,13 @@ DeadlineWidget::DeadlineWidget(DeadlineStore *store, QWidget *parent)
     m_calendar->setVerticalHeaderFormat(QCalendarWidget::NoVerticalHeader);
     m_calendar->setGridVisible(false);
     m_calendar->setToolTip(i18n("Double-click a day to add a deadline on it"));
+    // A sidebar is often narrower than the calendar's minimum width. Single-letter day
+    // names always fit, and day numbers fit even when the style's cell padding says
+    // they do not, so draw them in full instead of eliding them to "…"
+    m_calendar->setHorizontalHeaderFormat(QCalendarWidget::SingleLetterDayNames);
+    if (auto *view = m_calendar->findChild<QTableView *>(QStringLiteral("qt_calendar_calendarview"))) {
+        view->setTextElideMode(Qt::ElideNone);
+    }
 
     m_filter->addItem(i18n("Selected day"), SelectedDay);
     m_filter->addItem(i18n("Upcoming and overdue"), Upcoming);
@@ -62,16 +70,17 @@ DeadlineWidget::DeadlineWidget(DeadlineStore *store, QWidget *parent)
     m_list->setWordWrap(true);
     m_list->setToolTip(i18n("Tick a deadline to mark it done; double-click to edit"));
 
+    // The filter gets a row of its own so its text fits even in a narrow sidebar
     auto *toolbar = new QHBoxLayout;
-    toolbar->addWidget(m_filter, 1);
+    toolbar->addWidget(m_summary, 1);
     toolbar->addWidget(m_addButton);
     toolbar->addWidget(m_editButton);
     toolbar->addWidget(m_deleteButton);
 
     auto *layout = new QVBoxLayout(this);
     layout->addWidget(m_calendar);
+    layout->addWidget(m_filter);
     layout->addLayout(toolbar);
-    layout->addWidget(m_summary);
     layout->addWidget(m_list, 1);
 
     connect(m_calendar, &QCalendarWidget::selectionChanged, this, [this]() {
