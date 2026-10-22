@@ -40,6 +40,9 @@ public:
 
     ResourceSnapshot snapshot() const;
 
+    // Stops sampling while nothing shows the readings; resuming takes a fresh sample at once
+    void setPaused(bool paused);
+
 Q_SIGNALS:
     void updated();
 

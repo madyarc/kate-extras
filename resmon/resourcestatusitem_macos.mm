@@ -3,6 +3,7 @@
 
 #include <KLocalizedString>
 
+#include <QGuiApplication>
 #include <QLocale>
 
 #import <AppKit/AppKit.h>
@@ -92,6 +93,16 @@ ResourceStatusItem::ResourceStatusItem(ResourceSampler *sampler, QObject *parent
 
     connect(m_sampler, &ResourceSampler::updated, this, &ResourceStatusItem::update);
     update();
+
+    // Like the in-window meter on Linux, show it only while Kate is in front, and do
+    // not sample at all while it is not
+    auto followApplication = [this](Qt::ApplicationState state) {
+        const bool active = state == Qt::ApplicationActive;
+        statusItemOf(m_statusItem).visible = active;
+        m_sampler->setPaused(!active);
+    };
+    connect(qGuiApp, &QGuiApplication::applicationStateChanged, this, followApplication);
+    followApplication(QGuiApplication::applicationState());
 }
 
 ResourceStatusItem::~ResourceStatusItem()

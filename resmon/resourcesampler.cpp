@@ -26,6 +26,16 @@ ResourceSnapshot ResourceSampler::snapshot() const
     return m_snapshot;
 }
 
+void ResourceSampler::setPaused(bool paused)
+{
+    if (paused) {
+        m_timer->stop();
+    } else if (!m_timer->isActive()) {
+        m_timer->start();
+        sample();
+    }
+}
+
 void ResourceSampler::sample()
 {
     sampleMemory();
