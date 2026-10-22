@@ -1,0 +1,7 @@
+{
+    "KPlugin": {
+        "Name": "TeX & Markdown Preview",
+        "Description": "Side panel: live Markdown preview with KaTeX math, and LaTeX to PDF preview on save",
+        "Icon": "text-markdown"
+    }
+}

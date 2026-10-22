@@ -1,0 +1,9 @@
+build/
+*.tgz
+
+# makepkg output
+arch/src/
+arch/pkg/
+arch/texmdpreview/
+arch/*.pkg.tar.*
+arch/*.tgz
