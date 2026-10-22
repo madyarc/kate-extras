@@ -1,0 +1,40 @@
+/* SPDX-FileCopyrightText: 2026 Madhesh
+   SPDX-License-Identifier: GPL-3.0-or-later */
+
+:root {
+  --bg: #ffffff;
+  --fg: #232627;
+  --link: #2980b9;
+  --border: #c8c8c8;
+  --code-bg: #f3f3f3;
+}
+
+html, body { background: var(--bg); color: var(--fg); margin: 0; }
+
+#content {
+  font-family: "Noto Sans", sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  padding: 12px 18px 40vh 18px;
+  max-width: 900px;
+  overflow-wrap: break-word;
+}
+
+a { color: var(--link); }
+h1, h2 { border-bottom: 1px solid var(--border); padding-bottom: .2em; }
+img { max-width: 100%; }
+hr { border: 0; border-top: 1px solid var(--border); }
+
+code, pre { font-family: "Hack", "Noto Sans Mono", monospace; font-size: .9em; }
+code { background: var(--code-bg); padding: .1em .3em; border-radius: 3px; }
+pre { background: var(--code-bg); padding: .7em 1em; border-radius: 4px; overflow-x: auto; }
+pre code { background: none; padding: 0; }
+
+blockquote { margin: 0; padding: 0 1em; border-left: 3px solid var(--border); opacity: .85; }
+
+table { border-collapse: collapse; }
+th, td { border: 1px solid var(--border); padding: .3em .6em; }
+
+.katex { font-size: 1.1em; }
+.katex-display { overflow-x: auto; overflow-y: hidden; padding: .2em 0; }
+.texmd-err { color: #d33; font-family: monospace; white-space: pre-wrap; }
