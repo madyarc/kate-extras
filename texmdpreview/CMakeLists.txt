@@ -41,7 +41,7 @@ function(fetch_npm name version local_tgz outdir)
         if(local_tgz)
             set(tgz "${local_tgz}")
         else()
-            set(tgz "${CMAKE_BINARY_DIR}/${name}-${version}.tgz")
+            set(tgz "${CMAKE_CURRENT_BINARY_DIR}/${name}-${version}.tgz")
             message(STATUS "Downloading ${name} ${version}")
             file(DOWNLOAD "https://registry.npmjs.org/${name}/-/${name}-${version}.tgz" "${tgz}"
                  STATUS st TLS_VERIFY ON)
@@ -54,13 +54,13 @@ function(fetch_npm name version local_tgz outdir)
     endif()
 endfunction()
 
-fetch_npm(katex       ${KATEX_VERSION} "${KATEX_TARBALL}" "${CMAKE_BINARY_DIR}/katex_pkg")
-fetch_npm(markdown-it ${MDIT_VERSION}  "${MDIT_TARBALL}"  "${CMAKE_BINARY_DIR}/mdit_pkg")
+fetch_npm(katex       ${KATEX_VERSION} "${KATEX_TARBALL}" "${CMAKE_CURRENT_BINARY_DIR}/katex_pkg")
+fetch_npm(markdown-it ${MDIT_VERSION}  "${MDIT_TARBALL}"  "${CMAKE_CURRENT_BINARY_DIR}/mdit_pkg")
 
 set(WEBDIR ${KDE_INSTALL_DATADIR}/texmdpreview)
 install(FILES web/index.html web/render.js web/style.css DESTINATION ${WEBDIR})
-install(FILES "${CMAKE_BINARY_DIR}/mdit_pkg/package/dist/markdown-it.min.js" DESTINATION ${WEBDIR})
-install(FILES "${CMAKE_BINARY_DIR}/katex_pkg/package/dist/katex.min.js"
-              "${CMAKE_BINARY_DIR}/katex_pkg/package/dist/katex.min.css"
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/mdit_pkg/package/dist/markdown-it.min.js" DESTINATION ${WEBDIR})
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/katex_pkg/package/dist/katex.min.js"
+              "${CMAKE_CURRENT_BINARY_DIR}/katex_pkg/package/dist/katex.min.css"
         DESTINATION ${WEBDIR}/katex)
-install(DIRECTORY "${CMAKE_BINARY_DIR}/katex_pkg/package/dist/fonts" DESTINATION ${WEBDIR}/katex)
+install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/katex_pkg/package/dist/fonts" DESTINATION ${WEBDIR}/katex)

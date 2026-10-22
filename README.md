@@ -37,6 +37,16 @@ Small RAM and VRAM bars in the top-right corner of the menu bar, like the ones i
 
 The meter lives in the menu bar, so it is hidden while the menu bar is hidden (Ctrl+M).
 
+### TeX & Markdown Preview
+A side panel that previews both Markdown and LaTeX.
+
+- **`.md`**: live preview as you type, with math rendered by KaTeX (works offline)
+- **`.tex`**: compiles with `latexmk` on save and shows the PDF in an embedded Okular view, with errors listed above it
+- **SyncTeX both ways**: the PDF follows your cursor, and Shift+click in the PDF jumps back to the source line
+- The Markdown preview also follows your cursor line
+
+It has extra build dependencies (Qt WebEngine, KParts, KConfig and Okular), and the configure step downloads KaTeX and markdown-it from the npm registry once. See [texmdpreview/README.md](texmdpreview/README.md) for usage, shared math macros and offline builds.
+
 ## Requirements
 
 - Kate built on KDE Frameworks 6 (Kate 24.02 or newer)
@@ -51,6 +61,15 @@ The meter lives in the menu bar, so it is hidden while the menu bar is hidden (C
 
 Package names on Debian, Ubuntu and Fedora can differ between releases.
 
+TeX & Markdown Preview needs a C++20 compiler and these packages as well. Compiling `.tex` files also needs `latexmk`.
+
+| Distribution | Install command |
+|---|---|
+| Arch Linux | `sudo pacman -S --needed qt6-webengine kparts kconfig okular texlive-binextra` |
+| Fedora | `sudo dnf install qt6-qtwebengine-devel kf6-kparts-devel kf6-kconfig-devel 'cmake(Okular6)' okular /usr/bin/latexmk` |
+
+If you don't need it, configure with `-DBUILD_TEXMDPREVIEW=OFF`.
+
 ## Build and install
 
 ```sh
@@ -61,22 +80,23 @@ cmake --build build -j"$(nproc)"
 sudo cmake --install build
 ```
 
-To build only some of the plugins, switch the others off when configuring, for example `-DBUILD_SPOTIFY=OFF`. The options are `BUILD_SPOTIFY`, `BUILD_DEADLINES` and `BUILD_RESMON`.
+To build only some of the plugins, switch the others off when configuring, for example `-DBUILD_SPOTIFY=OFF`. The options are `BUILD_SPOTIFY`, `BUILD_DEADLINES`, `BUILD_RESMON` and `BUILD_TEXMDPREVIEW`.
 
 ## Turning the plugins on
 
 1. Restart Kate.
 2. Open **Settings → Configure Kate… → Plugins**.
-3. Tick **Spotify**, **Deadlines** and/or **Resource Monitor**, then click **OK**.
+3. Tick **Spotify**, **Deadlines**, **Resource Monitor** and/or **TeX & Markdown Preview**, then click **OK**.
 
 Kate remembers enabled plugins per session, so if you use several sessions, tick them in each one.
 
-Spotify and Deadlines appear as tabs on the right sidebar, and the resource meter appears at the right end of the menu bar.
+Spotify, Deadlines and TeX/MD Preview appear as tabs on the right sidebar, and the resource meter appears at the right end of the menu bar.
 
 ## Uninstall
 
 ```sh
-sudo rm /usr/lib/qt6/plugins/kf6/ktexteditor/{katespotifyplugin,katedeadlinesplugin,kateresmonplugin}.so
+sudo rm /usr/lib/qt6/plugins/kf6/ktexteditor/{katespotifyplugin,katedeadlinesplugin,kateresmonplugin,texmdpreview}.so
+sudo rm -r /usr/share/texmdpreview
 ```
 
 Some distributions use a different plugin path, such as `/usr/lib/x86_64-linux-gnu/qt6/plugins/...` on Debian and Ubuntu. `sudo xargs rm < build/install_manifest.txt` removes exactly what was installed.
@@ -85,4 +105,4 @@ Your deadlines stay in `~/.local/share/katedeadlines/` until you delete that fol
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE), except for the `texmdpreview/` folder, which is GPL-3.0-or-later (see [texmdpreview/LICENSE](texmdpreview/LICENSE)). A build that includes TeX & Markdown Preview is therefore distributed under the GPL; configure with `-DBUILD_TEXMDPREVIEW=OFF` for an MIT-only build.

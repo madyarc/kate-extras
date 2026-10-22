@@ -488,7 +488,7 @@ bool TexMdView::ensurePart()
     // "ViewerWidget" = embedded mode: Okular hands Shift+click source
     // references to us instead of launching its own editor command.
     m_part = res.plugin->create<KParts::ReadOnlyPart>(
-        this, QVariantList{QStringLiteral("ViewerWidget"), QStringLiteral("ConfigFileName=") + cfgPath});
+        this, QVariantList{QStringLiteral("ViewerWidget"), QString(QStringLiteral("ConfigFileName=") + cfgPath)});
     if (!m_part || !m_part->widget()) {
         delete m_part.data();
         m_pdfPlaceholder->setText(QStringLiteral("PDF part loaded but gave no widget."));
