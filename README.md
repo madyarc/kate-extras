@@ -39,7 +39,7 @@ Small RAM and VRAM bars in the top-right corner of the menu bar, like the ones i
 
 The meter lives in the menu bar, so it is hidden while the menu bar is hidden (Ctrl+M).
 
-On macOS, and on Linux desktops with a global menu, the window has no menu bar of its own, so the meter appears among the menu bar extras at the top right of the screen instead. Click it for the details. On Apple silicon the GPU shares system memory, so the VRAM bar shows the memory the GPU is using against the share of RAM that macOS lets the GPU keep (Metal's recommended working set). Load is shown; temperature is not.
+On macOS the window has no menu bar of its own, so the meter sits among the menu bar extras at the top right of the screen as **Memory** with a usage bar (the same "Memory Used" figure as Activity Monitor). Click it for Memory, Swap, Storage and the GPU's current load. Macs have no separate VRAM to show: Apple silicon GPUs share system memory. Linux desktops with a global menu get the RAM / VRAM meter as a system tray icon instead.
 
 ### TeX & Markdown Preview
 A side panel that previews both Markdown and LaTeX.

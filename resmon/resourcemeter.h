@@ -17,7 +17,7 @@ public:
 
     QSize sizeHint() const override;
 
-    // Shared with the macOS menu bar extra, which draws the same meter into an icon
+    // Shared with ResourceStatusItem, which draws the same meter into a tray icon
     static QSize meterSize(const QFont &font, int barWidth = defaultBarWidth);
     static void paintMeter(QPainter *painter,
                            const QRect &rect,

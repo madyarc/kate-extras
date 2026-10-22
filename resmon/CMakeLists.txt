@@ -2,14 +2,14 @@ add_library(kateresmonplugin MODULE
     kateresmonplugin.cpp
     resourcesampler.cpp
     resourcemeter.cpp
-    resourcestatusitem.cpp
+    resourcestatusitem.h # for AUTOMOC: the macOS source has a different name
 )
 
 if(APPLE)
-    target_sources(kateresmonplugin PRIVATE resourcesampler_macos.mm)
-    target_link_libraries(kateresmonplugin PRIVATE "-framework Foundation" "-framework IOKit" "-framework Metal")
+    target_sources(kateresmonplugin PRIVATE resourcesampler_macos.mm resourcestatusitem_macos.mm)
+    target_link_libraries(kateresmonplugin PRIVATE "-framework AppKit" "-framework IOKit")
 else()
-    target_sources(kateresmonplugin PRIVATE resourcesampler_linux.cpp)
+    target_sources(kateresmonplugin PRIVATE resourcesampler_linux.cpp resourcestatusitem.cpp)
 endif()
 
 target_compile_definitions(kateresmonplugin PRIVATE TRANSLATION_DOMAIN="kateresmon")

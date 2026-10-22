@@ -70,4 +70,4 @@ resign
 
 echo
 echo "Installed into $KATE_APP. Restart Kate, then enable the plugins under"
-echo "Settings → Configure Kate… → Plugins."
+echo "Kate → Preferences… (⌘,) → Plugins."

@@ -27,7 +27,6 @@ struct ResourceSnapshot {
     qint64 vramTotal = 0;
     int gpuUtilization = -1;
     int gpuTemperature = -1;
-    bool unifiedMemory = false; // the GPU shares system RAM (Apple silicon)
 };
 
 // Periodically samples memory, disk and GPU usage; one instance is shared by all Kate windows.
@@ -54,9 +53,7 @@ private:
     ResourceSnapshot m_snapshot;
     QTimer *m_timer;
 
-#ifdef Q_OS_MACOS
-    qint64 m_gpuWorkingSetLimit = 0;
-#else
+#ifndef Q_OS_MACOS
     void onNvidiaSmiFinished();
 
     QString m_nvidiaSmi;

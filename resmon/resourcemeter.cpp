@@ -159,9 +159,6 @@ QString ResourceMeter::toolTipHtml(const ResourceSnapshot &snapshot)
         if (!details.isEmpty()) {
             html += QStringLiteral(" · %1").arg(details.join(QStringLiteral(" · ")));
         }
-        if (snapshot.unifiedMemory) {
-            html += QStringLiteral("<br/>%1").arg(i18n("Unified memory: VRAM is system memory in use by the GPU."));
-        }
         break;
     }
     case ResourceSnapshot::GpuState::Asleep:

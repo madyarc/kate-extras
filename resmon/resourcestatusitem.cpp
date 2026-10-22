@@ -41,6 +41,8 @@ ResourceStatusItem::ResourceStatusItem(ResourceSampler *sampler, QObject *parent
     m_trayIcon->show();
 }
 
+ResourceStatusItem::~ResourceStatusItem() = default;
+
 void ResourceStatusItem::update()
 {
     const ResourceSnapshot snapshot = m_sampler->snapshot();
