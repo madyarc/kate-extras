@@ -89,7 +89,7 @@ To build only some of the plugins, switch the others off when configuring, for e
 ## Turning the plugins on
 
 1. Restart Kate.
-2. Open **Settings → Configure Kate… → Plugins**.
+2. Open **Settings → Configure Kate… → Plugins**. On macOS it is **Kate → Preferences…** (⌘,) in the menu bar instead.
 3. Tick **Spotify**, **Deadlines**, **Resource Monitor** and/or **TeX & Markdown Preview**, then click **OK**.
 
 Kate remembers enabled plugins per session, so if you use several sessions, tick them in each one.
