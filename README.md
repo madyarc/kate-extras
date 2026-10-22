@@ -2,7 +2,7 @@
 
 A growing collection of plugins for KDE's [Kate](https://kate-editor.org/) editor.
 
-They are native C++ plugins (Qt 6 / KDE Frameworks 6) and need no Python, no accounts and no API keys.
+They are native C++ plugins (Qt 6 / KDE Frameworks 6) and need no Python, no accounts and no API keys. Spotify, Deadlines and Resource Monitor run on Linux and macOS ([macOS instructions](#macos)).
 
 ## The plugins
 
@@ -14,7 +14,9 @@ A side panel for controlling the Spotify desktop app without leaving Kate.
 - **Show Spotify** brings the Spotify window to the front; **Launch Spotify** starts it if it is closed
 - **Tools → Spotify** menu actions that you can bind to keyboard shortcuts
 
-It talks to the Spotify app over [MPRIS](https://specifications.freedesktop.org/mpris-spec/latest/) on the local D-Bus, so the Spotify desktop client has to be running. Some Spotify builds ignore volume changes from other apps; everything else works.
+On Linux it talks to the Spotify app over [MPRIS](https://specifications.freedesktop.org/mpris-spec/latest/) on the local D-Bus, so the Spotify desktop client has to be running. Some Spotify builds ignore volume changes from other apps; everything else works.
+
+On macOS it uses Spotify's AppleScript interface instead. The first time, macOS asks whether Kate may control Spotify; if you said no, turn it back on under System Settings → Privacy & Security → Automation.
 
 ### Deadlines
 A calendar side panel for keeping track of due dates.
@@ -25,7 +27,7 @@ A calendar side panel for keeping track of due dates.
 - Double-click a day to add a deadline there, or use **Tools → Deadlines → Add Deadline…**
 - A summary line such as "2 overdue · 1 due today"
 
-Deadlines are stored as plain JSON in `~/.local/share/katedeadlines/deadlines.json`, and every open Kate window stays in sync with that file.
+Deadlines are stored as plain JSON in `~/.local/share/katedeadlines/deadlines.json` (on macOS, `~/Library/Application Support/katedeadlines/deadlines.json`), and every open Kate window stays in sync with that file.
 
 ### Resource Monitor
 Small RAM and VRAM bars in the top-right corner of the menu bar, like the ones in Google Colab.
@@ -36,6 +38,8 @@ Small RAM and VRAM bars in the top-right corner of the menu bar, like the ones i
 - **Battery friendly on hybrid laptops:** a powered-down discrete GPU is never queried, because querying it would wake it up
 
 The meter lives in the menu bar, so it is hidden while the menu bar is hidden (Ctrl+M).
+
+On macOS, and on Linux desktops with a global menu, the window has no menu bar of its own, so the meter appears among the menu bar extras at the top right of the screen instead. Click it for the details. On Apple silicon the GPU shares system memory, so the VRAM bar shows the memory the GPU is using against the share of RAM that macOS lets the GPU keep (Metal's recommended working set). Load is shown; temperature is not.
 
 ### TeX & Markdown Preview
 A side panel that previews both Markdown and LaTeX.
@@ -92,7 +96,35 @@ Kate remembers enabled plugins per session, so if you use several sessions, tick
 
 Spotify, Deadlines and TeX/MD Preview appear as tabs on the right sidebar, and the resource meter appears at the right end of the menu bar.
 
+## macOS
+
+Kate for macOS ([download](https://kate-editor.org/get-it/)) ships its own copy of Qt and KDE Frameworks inside `kate.app`, and a plugin has to be built against exactly those versions. `macos/install.sh` takes care of that:
+
+```sh
+brew install cmake ninja sevenzip
+git clone https://github.com/vignesh-kumar-v/kate-extras.git
+cd kate-extras
+macos/install.sh
+```
+
+The script:
+
+1. reads the Qt and Frameworks versions out of `kate.app` and downloads matching development files from KDE's [Craft](https://community.kde.org/Craft) binary cache into `build-sdk/` (a 95 MB download that takes 360 MB on disk, only the first time; see `macos/setup-sdk.sh`),
+2. builds Spotify, Deadlines and Resource Monitor and links them to the libraries inside `kate.app`,
+3. copies them to `kate.app/Contents/PlugIns/kf6/ktexteditor/`,
+4. **re-signs `kate.app` on your Mac (ad hoc)**. KDE signs Kate with the hardened runtime, which refuses any plugin that KDE did not sign itself, so this step is unavoidable. It also lets macOS ask for permission to control Spotify, and clears the download quarantine flag so Gatekeeper does not reject the re-signed app.
+
+Then restart Kate and turn the plugins on as described above. If macOS says your terminal was prevented from modifying apps, allow it under System Settings → Privacy & Security → App Management and run the script again.
+
+A Kate update replaces `kate.app`, which removes the plugins and restores KDE's signature: run `macos/install.sh` again afterwards. If the new Kate uses newer Qt or Frameworks versions, delete `build-sdk/` first so the script fetches matching ones. Kate is looked for in `/Applications/kate.app`; set `KATE_APP` to use another location.
+
+`macos/install.sh --uninstall` removes the plugins again. To get KDE's original signature back, reinstall Kate.
+
+TeX & Markdown Preview is not built on macOS, because Kate's macOS bundle does not include Okular.
+
 ## Uninstall
+
+On macOS, see [above](#macos). On Linux:
 
 ```sh
 sudo rm /usr/lib/qt6/plugins/kf6/ktexteditor/{katespotifyplugin,katedeadlinesplugin,kateresmonplugin,texmdpreview}.so
@@ -101,7 +133,7 @@ sudo rm -r /usr/share/texmdpreview
 
 Some distributions use a different plugin path, such as `/usr/lib/x86_64-linux-gnu/qt6/plugins/...` on Debian and Ubuntu. `sudo xargs rm < build/install_manifest.txt` removes exactly what was installed.
 
-Your deadlines stay in `~/.local/share/katedeadlines/` until you delete that folder.
+Your deadlines stay in `~/.local/share/katedeadlines/` (macOS: `~/Library/Application Support/katedeadlines/`) until you delete that folder.
 
 ## License
 

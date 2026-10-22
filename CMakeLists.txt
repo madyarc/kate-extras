@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.16)
 project(kate-extras VERSION 1.0)
 
+if(APPLE)
+    # The macOS resource sampler talks to Metal
+    enable_language(OBJCXX)
+endif()
+
 find_package(ECM 6.0 REQUIRED NO_MODULE)
 set(CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
 
@@ -17,8 +22,20 @@ option(BUILD_TEXMDPREVIEW "Build the Markdown / LaTeX preview panel" ON)
 find_package(Qt6 REQUIRED COMPONENTS Widgets)
 find_package(KF6 REQUIRED COMPONENTS TextEditor I18n CoreAddons XmlGui)
 
+# On macOS, point a plugin at the Qt and KDE Frameworks bundled inside Kate.app
+function(kate_extras_plugin target)
+    if(APPLE)
+        add_custom_command(TARGET ${target} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -DFILE=$<TARGET_FILE:${target}> -P ${PROJECT_SOURCE_DIR}/macos/BundleLinks.cmake
+            VERBATIM)
+    endif()
+endfunction()
+
 if(BUILD_SPOTIFY)
-    find_package(Qt6 REQUIRED COMPONENTS DBus Network)
+    find_package(Qt6 REQUIRED COMPONENTS Network)
+    if(NOT APPLE)
+        find_package(Qt6 REQUIRED COMPONENTS DBus)
+    endif()
     add_subdirectory(spotify)
 endif()
 if(BUILD_DEADLINES)

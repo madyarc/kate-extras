@@ -9,7 +9,6 @@
 
 namespace
 {
-constexpr int s_barWidth = 90;
 constexpr int s_margin = 4;
 
 QColor usageColor(double fraction)
@@ -47,10 +46,10 @@ ResourceMeter::ResourceMeter(ResourceSampler *sampler, QWidget *parent)
 {
     setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
     connect(m_sampler, &ResourceSampler::updated, this, [this]() {
-        updateToolTip();
+        setToolTip(toolTipHtml(m_sampler->snapshot()));
         update();
     });
-    updateToolTip();
+    setToolTip(toolTipHtml(m_sampler->snapshot()));
 }
 
 QFont ResourceMeter::meterFont() const
@@ -62,22 +61,39 @@ QFont ResourceMeter::meterFont() const
 
 QSize ResourceMeter::sizeHint() const
 {
-    const QFontMetrics metrics(meterFont());
+    return meterSize(meterFont());
+}
+
+QSize ResourceMeter::meterSize(const QFont &font, int barWidth)
+{
+    const QFontMetrics metrics(font);
     const int labelWidth = metrics.horizontalAdvance(QStringLiteral("VRAM")) + s_margin;
-    return QSize(labelWidth + s_barWidth + 3 * s_margin, 2 * metrics.height() + 2);
+    return QSize(labelWidth + barWidth + 3 * s_margin, 2 * metrics.height() + 2);
 }
 
 void ResourceMeter::paintEvent(QPaintEvent *)
 {
-    const ResourceSnapshot snapshot = m_sampler->snapshot();
-
     QPainter painter(this);
-    painter.setRenderHint(QPainter::Antialiasing);
     painter.setFont(meterFont());
+    paintMeter(&painter,
+               rect(),
+               m_sampler->snapshot(),
+               palette().color(QPalette::Active, QPalette::WindowText),
+               palette().color(QPalette::Disabled, QPalette::WindowText));
+}
 
-    const QFontMetrics metrics(painter.font());
+void ResourceMeter::paintMeter(QPainter *painter,
+                               const QRect &rect,
+                               const ResourceSnapshot &snapshot,
+                               const QColor &textColor,
+                               const QColor &disabledTextColor,
+                               int barWidth)
+{
+    painter->setRenderHint(QPainter::Antialiasing);
+
+    const QFontMetrics metrics(painter->font());
     const int labelWidth = metrics.horizontalAdvance(QStringLiteral("VRAM")) + s_margin;
-    const int rowHeight = height() / 2;
+    const int rowHeight = rect.height() / 2;
 
     struct Row {
         QString label;
@@ -90,37 +106,35 @@ void ResourceMeter::paintEvent(QPaintEvent *)
         {QStringLiteral("VRAM"), gpuActive ? fractionOf(snapshot.vramUsed, snapshot.vramTotal) : 0.0, gpuActive},
     };
 
-    QColor trackColor = palette().color(QPalette::WindowText);
+    QColor trackColor = textColor;
     trackColor.setAlphaF(0.15);
 
     for (int i = 0; i < 2; ++i) {
         const Row &row = rows[i];
-        const QRect rowRect(s_margin, i * rowHeight, width() - 2 * s_margin, rowHeight);
+        const QRect rowRect(rect.left() + s_margin, rect.top() + i * rowHeight, rect.width() - 2 * s_margin, rowHeight);
 
-        painter.setPen(palette().color(row.active ? QPalette::Active : QPalette::Disabled, QPalette::WindowText));
-        painter.drawText(QRect(rowRect.left(), rowRect.top(), labelWidth, rowRect.height()), Qt::AlignVCenter | Qt::AlignLeft, row.label);
+        painter->setPen(row.active ? textColor : disabledTextColor);
+        painter->drawText(QRect(rowRect.left(), rowRect.top(), labelWidth, rowRect.height()), Qt::AlignVCenter | Qt::AlignLeft, row.label);
 
         const int barHeight = qMax(4, rowHeight / 2);
-        const QRectF track(rowRect.left() + labelWidth, rowRect.center().y() - barHeight / 2.0 + 1, s_barWidth, barHeight);
+        const QRectF track(rowRect.left() + labelWidth, rowRect.center().y() - barHeight / 2.0 + 1, barWidth, barHeight);
         const qreal radius = barHeight / 2.0;
 
         QPainterPath trackPath;
         trackPath.addRoundedRect(track, radius, radius);
-        painter.fillPath(trackPath, trackColor);
+        painter->fillPath(trackPath, trackColor);
 
         if (row.active && row.fraction > 0) {
-            painter.save();
-            painter.setClipPath(trackPath);
-            painter.fillRect(QRectF(track.left(), track.top(), track.width() * row.fraction, track.height()), usageColor(row.fraction));
-            painter.restore();
+            painter->save();
+            painter->setClipPath(trackPath);
+            painter->fillRect(QRectF(track.left(), track.top(), track.width() * row.fraction, track.height()), usageColor(row.fraction));
+            painter->restore();
         }
     }
 }
 
-void ResourceMeter::updateToolTip()
+QString ResourceMeter::toolTipHtml(const ResourceSnapshot &snapshot)
 {
-    const ResourceSnapshot snapshot = m_sampler->snapshot();
-
     QString html = QStringLiteral("<table cellspacing=\"2\">");
     html += usageRow(i18n("RAM"), snapshot.ramUsed, snapshot.ramTotal);
     if (snapshot.swapTotal > 0) {
@@ -145,6 +159,9 @@ void ResourceMeter::updateToolTip()
         if (!details.isEmpty()) {
             html += QStringLiteral(" · %1").arg(details.join(QStringLiteral(" · ")));
         }
+        if (snapshot.unifiedMemory) {
+            html += QStringLiteral("<br/>%1").arg(i18n("Unified memory: VRAM is system memory in use by the GPU."));
+        }
         break;
     }
     case ResourceSnapshot::GpuState::Asleep:
@@ -158,5 +175,5 @@ void ResourceMeter::updateToolTip()
         break;
     }
 
-    setToolTip(html);
+    return html;
 }
