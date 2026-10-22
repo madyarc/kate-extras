@@ -14,8 +14,8 @@ Requires KDE Plasma 6 (KDE Frameworks 6, Qt 6). Tested on Fedora 44 (KF 6.30, Qt
 ### Arch Linux
 
 ```
-git clone https://github.com/madyarc/texmdpreview.git
-cd texmdpreview/arch
+git clone https://github.com/vignesh-kumar-v/kate-extras.git
+cd kate-extras/texmdpreview/arch
 makepkg -si
 ```
 
@@ -27,8 +27,8 @@ The `PKGBUILD` builds the checkout it sits in, so nothing is cloned twice. To up
 sudo dnf install cmake gcc-c++ extra-cmake-modules qt6-qtbase-devel qt6-qtwebengine-devel \
     kf6-ktexteditor-devel kf6-kparts-devel kf6-kcoreaddons-devel kf6-kconfig-devel \
     'cmake(Okular6)' /usr/bin/latexmk okular
-git clone https://github.com/madyarc/texmdpreview.git
-cd texmdpreview
+git clone https://github.com/vignesh-kumar-v/kate-extras.git
+cd kate-extras/texmdpreview
 cmake -B build -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j
 sudo cmake --install build

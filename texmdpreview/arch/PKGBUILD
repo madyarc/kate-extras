@@ -1,8 +1,8 @@
 # Maintainer: Madhesh <https://github.com/madyarc>
 #
 # Builds the checkout this PKGBUILD sits in (no second clone):
-#   git clone https://github.com/madyarc/texmdpreview.git
-#   cd texmdpreview/arch && makepkg -si
+#   git clone https://github.com/vignesh-kumar-v/kate-extras.git
+#   cd kate-extras/texmdpreview/arch && makepkg -si
 # Update later with: git pull && makepkg -si
 
 pkgname=texmdpreview
@@ -10,7 +10,7 @@ pkgver=0.1
 pkgrel=1
 pkgdesc="Kate side panel: live Markdown preview with KaTeX math, LaTeX to PDF preview with SyncTeX"
 arch=('x86_64')
-url="https://github.com/madyarc/texmdpreview"
+url="https://github.com/vignesh-kumar-v/kate-extras"
 license=('GPL-3.0-or-later')
 depends=('kate' 'ktexteditor' 'kparts' 'kcoreaddons' 'kconfig' 'qt6-base' 'qt6-webengine' 'okular')
 makedepends=('cmake' 'extra-cmake-modules')
