@@ -166,6 +166,8 @@ NotebookWidget::NotebookWidget(const QString &path, QWidget *parent)
 
     QString error;
     if (!load(&error)) {
+        // load() only names the tab on success
+        setModified(false);
         auto *showJson = new QAction(QIcon::fromTheme(QStringLiteral("text-x-script")), i18n("Show JSON"), m_message);
         connect(showJson, &QAction::triggered, this, [this]() {
             Q_EMIT showJsonRequested(m_path);

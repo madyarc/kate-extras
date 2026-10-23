@@ -181,6 +181,16 @@ void writeValue(QByteArray &out, const QJsonValue &value, int depth, int indentW
 
 bool Notebook::load(const QByteArray &json, QString *error)
 {
+    // An empty file (e.g. made with touch) is a new notebook, as in Jupyter
+    if (json.trimmed().isEmpty()) {
+        m_root = QJsonObject{{QStringLiteral("metadata"), QJsonObject()},
+                             {QStringLiteral("nbformat"), 4},
+                             {QStringLiteral("nbformat_minor"), 5}};
+        m_indentWidth = 1;
+        cells.clear();
+        return true;
+    }
+
     QJsonParseError parseError;
     const QJsonDocument document = QJsonDocument::fromJson(json, &parseError);
     if (parseError.error != QJsonParseError::NoError || !document.isObject()) {
