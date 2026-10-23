@@ -15,7 +15,7 @@ REPO="$(cd "$(dirname "$0")/.." && pwd)"
 KATE_APP="${KATE_APP:-/Applications/kate.app}"
 SDK="$REPO/build-sdk"
 BUILD="$REPO/build-macos"
-PLUGINS=(katedeadlinesplugin katespotifyplugin kateresmonplugin)
+PLUGINS=(katedeadlinesplugin katespotifyplugin kateresmonplugin katenotebookplugin)
 PLUGIN_DIR="$KATE_APP/Contents/PlugIns/kf6/ktexteditor"
 
 die() { echo "error: $*" >&2; exit 1; }

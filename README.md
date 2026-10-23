@@ -2,7 +2,7 @@
 
 A growing collection of plugins for KDE's [Kate](https://kate-editor.org/) editor.
 
-They are native C++ plugins (Qt 6 / KDE Frameworks 6) and need no Python, no accounts and no API keys. Spotify, Deadlines and Resource Monitor run on Linux and macOS ([macOS instructions](#macos)).
+They are native C++ plugins (Qt 6 / KDE Frameworks 6) and need no Python, no accounts and no API keys. Spotify, Deadlines, Resource Monitor and Jupyter Notebook run on Linux and macOS ([macOS instructions](#macos)).
 
 ## The plugins
 
@@ -41,6 +41,20 @@ The meter lives in the menu bar, so it is hidden while the menu bar is hidden (C
 
 On macOS the window has no menu bar of its own, so the meter sits among the menu bar extras at the top right of the screen as **Memory** with a usage bar (the same "Memory Used" figure as Activity Monitor). Like the in-window meter, it is only there while Kate is the active app, and it stops sampling while Kate is in the background. Click it for Memory, Swap, Storage and the GPU's current load. Macs have no separate VRAM to show: Apple silicon GPUs share system memory. Linux desktops with a global menu get the RAM / VRAM meter as a system tray icon instead.
 
+### Jupyter Notebook
+Opens `.ipynb` files as notebooks instead of raw JSON, and runs them.
+
+- Each cell is a full Kate editor: syntax highlighting, auto-indent, your theme and key bindings
+- **Shift+Enter** runs a cell and moves on, **Ctrl+Enter** (⌘+Enter on macOS) runs it in place, **Alt+Enter** runs it and inserts a cell below
+- Run All, Interrupt and Restart, with `[*]` / `[n]` prompts as in Jupyter; an error stops a Run All
+- Outputs: text and progress bars, coloured tracebacks, pandas tables, Markdown, and PNG, JPEG and SVG images (matplotlib works)
+- Markdown cells show rendered text; double-click to edit
+- Saves exactly the way Jupyter does (same JSON layout and line splitting), so diffs stay small
+- Unsaved notebooks are guarded when you close the tab or window or quit Kate, and open notebooks come back with the session
+- **JSON** in the notebook's tool bar opens the raw file in a normal tab; **Tools → Open as Notebook** goes the other way
+
+Cells run on a Jupyter kernel, started from the nearest `venv`, `.venv` or `env` above the notebook, or else a `python3` on the system. Click the Python name in the tool bar to choose another interpreter; the choice is remembered for that folder. That Python needs a kernel installed (`python -m pip install ipykernel`). Kernels talk to Kate over private Unix sockets, not network ports. LaTeX math in Markdown is shown as source.
+
 ### TeX & Markdown Preview
 A side panel that previews both Markdown and LaTeX.
 
@@ -65,6 +79,14 @@ It has extra build dependencies (Qt WebEngine, KParts, KConfig and Okular), and 
 
 Package names on Debian, Ubuntu and Fedora can differ between releases.
 
+Jupyter Notebook needs a few more packages, and a Python with `ipykernel` at run time:
+
+| Distribution | Install command |
+|---|---|
+| Arch Linux | `sudo pacman -S --needed qt6-svg kwidgetsaddons kconfig python-ipykernel` |
+| Debian / Ubuntu | `sudo apt install qt6-svg-dev libkf6widgetsaddons-dev libkf6config-dev python3-ipykernel` |
+| Fedora | `sudo dnf install qt6-qtsvg-devel kf6-kwidgetsaddons-devel kf6-kconfig-devel python3-ipykernel` |
+
 TeX & Markdown Preview needs a C++20 compiler and these packages as well. Compiling `.tex` files also needs `latexmk`.
 
 | Distribution | Install command |
@@ -84,13 +106,13 @@ cmake --build build -j"$(nproc)"
 sudo cmake --install build
 ```
 
-To build only some of the plugins, switch the others off when configuring, for example `-DBUILD_SPOTIFY=OFF`. The options are `BUILD_SPOTIFY`, `BUILD_DEADLINES`, `BUILD_RESMON` and `BUILD_TEXMDPREVIEW`.
+To build only some of the plugins, switch the others off when configuring, for example `-DBUILD_SPOTIFY=OFF`. The options are `BUILD_SPOTIFY`, `BUILD_DEADLINES`, `BUILD_RESMON`, `BUILD_NOTEBOOK` and `BUILD_TEXMDPREVIEW`.
 
 ## Turning the plugins on
 
 1. Restart Kate.
 2. Open **Settings → Configure Kate… → Plugins**. On macOS it is **Kate → Preferences…** (⌘,) in the menu bar instead.
-3. Tick **Spotify**, **Deadlines**, **Resource Monitor** and/or **TeX & Markdown Preview**, then click **OK**.
+3. Tick **Spotify**, **Deadlines**, **Resource Monitor**, **Jupyter Notebook** and/or **TeX & Markdown Preview**, then click **OK**.
 
 Kate remembers enabled plugins per session, so if you use several sessions, tick them in each one.
 
@@ -110,7 +132,7 @@ macos/install.sh
 The script:
 
 1. reads the Qt and Frameworks versions out of `kate.app` and downloads matching development files from KDE's [Craft](https://community.kde.org/Craft) binary cache into `build-sdk/` (a 95 MB download that takes 360 MB on disk, only the first time; see `macos/setup-sdk.sh`),
-2. builds Spotify, Deadlines and Resource Monitor and links them to the libraries inside `kate.app`,
+2. builds Spotify, Deadlines, Resource Monitor and Jupyter Notebook and links them to the libraries inside `kate.app`,
 3. copies them to `kate.app/Contents/PlugIns/kf6/ktexteditor/`,
 4. **re-signs `kate.app` on your Mac (ad hoc)**. KDE signs Kate with the hardened runtime, which refuses any plugin that KDE did not sign itself, so this step is unavoidable. It also lets macOS ask for permission to control Spotify, and clears the download quarantine flag so Gatekeeper does not reject the re-signed app.
 
@@ -127,7 +149,7 @@ TeX & Markdown Preview is not built on macOS, because Kate's macOS bundle does n
 On macOS, see [above](#macos). On Linux:
 
 ```sh
-sudo rm /usr/lib/qt6/plugins/kf6/ktexteditor/{katespotifyplugin,katedeadlinesplugin,kateresmonplugin,texmdpreview}.so
+sudo rm /usr/lib/qt6/plugins/kf6/ktexteditor/{katespotifyplugin,katedeadlinesplugin,kateresmonplugin,katenotebookplugin,texmdpreview}.so
 sudo rm -r /usr/share/texmdpreview
 ```
 

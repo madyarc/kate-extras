@@ -1,0 +1,11 @@
+{
+    "KPlugin": {
+        "Description": "Open, edit and run Jupyter notebooks (.ipynb)",
+        "Name": "Jupyter Notebook",
+        "Icon": "application-x-ipynb+json",
+        "Authors": [ { "Name": "Vignesh" } ],
+        "License": "MIT",
+        "Version": "1.0",
+        "ServiceTypes": [ "KTextEditor/Plugin" ]
+    }
+}
