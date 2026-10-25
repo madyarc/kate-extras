@@ -1,0 +1,54 @@
+# Maintainer: Madhesh <https://github.com/madyarc>
+#
+# Builds the checkout this PKGBUILD sits in (no second clone):
+#   git clone https://github.com/vignesh-kumar-v/kate-extras.git
+#   cd kate-extras/packaging/arch && makepkg -si
+# Update later with: git pull && makepkg -si
+
+pkgname=kate-extras
+pkgver=1.0
+pkgrel=1
+pkgdesc="Plugins for Kate: Spotify, Deadlines, Resource Monitor, Jupyter Notebook and TeX & Markdown Preview"
+arch=('x86_64')
+url="https://github.com/vignesh-kumar-v/kate-extras"
+license=('MIT' 'GPL-3.0-or-later')
+depends=('kate' 'ktexteditor' 'ki18n' 'kcoreaddons' 'kxmlgui' 'kwidgetsaddons' 'kconfig' 'kparts'
+         'qt6-base' 'qt6-svg' 'qt6-webengine' 'okular')
+makedepends=('cmake' 'extra-cmake-modules' 'git')
+optdepends=('spotify: the player the Spotify panel controls'
+            'python-ipykernel: run cells in Jupyter notebooks'
+            'texlive-binextra: latexmk, needed to compile .tex files'
+            'texlive-basic: pdflatex')
+provides=('texmdpreview')
+conflicts=('texmdpreview')
+
+_katex=0.16.22
+_mdit=14.1.0
+source=("katex-$_katex.tgz::https://registry.npmjs.org/katex/-/katex-$_katex.tgz"
+        "markdown-it-$_mdit.tgz::https://registry.npmjs.org/markdown-it/-/markdown-it-$_mdit.tgz")
+noextract=("katex-$_katex.tgz" "markdown-it-$_mdit.tgz")
+sha256sums=('SKIP'
+            'SKIP')
+
+_repo="$startdir/../.."
+
+pkgver() {
+  printf "1.0.r%s.%s" "$(git -C "$_repo" rev-list --count HEAD)" "$(git -C "$_repo" rev-parse --short HEAD)"
+}
+
+build() {
+  cmake -B build -S "$_repo" \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DCMAKE_BUILD_TYPE=None \
+    -DKATEX_VERSION="$_katex" \
+    -DMDIT_VERSION="$_mdit" \
+    -DKATEX_TARBALL="$srcdir/katex-$_katex.tgz" \
+    -DMDIT_TARBALL="$srcdir/markdown-it-$_mdit.tgz"
+  cmake --build build
+}
+
+package() {
+  DESTDIR="$pkgdir" cmake --install build
+  install -Dm644 "$_repo/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 "$_repo/texmdpreview/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/texmdpreview-LICENSE"
+}
