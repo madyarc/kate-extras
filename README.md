@@ -108,6 +108,34 @@ sudo cmake --install build
 
 To build only some of the plugins, switch the others off when configuring, for example `-DBUILD_SPOTIFY=OFF`. The options are `BUILD_SPOTIFY`, `BUILD_DEADLINES`, `BUILD_RESMON`, `BUILD_NOTEBOOK` and `BUILD_TEXMDPREVIEW`.
 
+## Install as a package (Arch Linux, Fedora)
+
+Instead of `sudo cmake --install`, you can build a package that your package manager tracks, updates and removes cleanly. Both packages contain all five plugins.
+
+**Arch Linux:**
+
+```sh
+git clone https://github.com/vignesh-kumar-v/kate-extras.git
+cd kate-extras/packaging/arch
+makepkg -si
+```
+
+The `PKGBUILD` builds the checkout it sits in. To update later: `git pull && makepkg -si`. To remove: `sudo pacman -R kate-extras`. It replaces the standalone `texmdpreview` package.
+
+**Fedora:**
+
+```sh
+sudo dnf install git rpm-build rpmdevtools
+git clone https://github.com/vignesh-kumar-v/kate-extras.git
+cd kate-extras
+packaging/fedora/build-rpm.sh
+sudo dnf install build-rpm/RPMS/*/kate-extras-*.rpm
+```
+
+`build-rpm.sh` installs the build dependencies, packs the current checkout and builds the RPM from `packaging/fedora/kate-extras.spec`. To update later: `git pull`, then run the last two commands again. To remove: `sudo dnf remove kate-extras`.
+
+If you installed with `sudo cmake --install` before, remove those files first (see [Uninstall](#uninstall)), or the package manager will refuse to overwrite them.
+
 ## Turning the plugins on
 
 1. Restart Kate.
